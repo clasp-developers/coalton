@@ -34,8 +34,8 @@
       #+allegro (cl:logxor lhs (cl:+ rhs #x9e3779b9 (cl:ash lhs 6) (cl:ash lhs -2)))
 
       ;; 64bit hash combination
-      ;; logand required on ccl to force the output to be a fixnum
-      #+ccl (cl:logand (cl:logxor lhs (cl:+ rhs #x517cc1b727220a95 (cl:ash lhs 6) (cl:ash lhs -2))) cl:most-positive-fixnum)))
+      ;; logand forces the output to be a fixnum.
+      #-(or sbcl allegro) (cl:logand (cl:logxor lhs (cl:+ rhs #x517cc1b727220a95 (cl:ash lhs 6) (cl:ash lhs -2))) cl:most-positive-fixnum)))
 
   (declare combine-hashes-order-independent (Hash -> Hash -> Hash))
   (define (combine-hashes-order-independent lhs rhs)

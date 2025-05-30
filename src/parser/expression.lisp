@@ -653,16 +653,15 @@ Rebound to NIL parsing an anonymous FN.")
             
             (bindings (loop :for bindings := (cst:second form) :then (cst:rest bindings)
                             :while (cst:consp bindings)
-                            :for binding := (cst:first bindings)
                             ;; if binding is in the form (declare x y+)
-                            :if (and (cst:consp binding)
+                            :if (and (cst:consp (cst:first bindings))
                                      (cst:consp (cst:rest form))
                                      (cst:consp (cst:rest (cst:rest form)))
-                                     (cst:atom (cst:first binding))
-                                     (eq (cst:raw (cst:first binding)) 'coalton:declare))
-                              :do (push (parse-let-declare binding source) declares)
+                                     (cst:atom (cst:first (cst:first bindings)))
+                                     (eq (cst:raw (cst:first (cst:first bindings))) 'coalton:declare))
+                              :do (push (parse-let-declare (cst:first bindings) source) declares)
                             :else
-                              :collect (parse-let-binding binding source))))
+                              :collect (parse-let-binding (cst:first bindings) source))))
 
        (make-node-let
         :bindings bindings
@@ -730,16 +729,15 @@ Rebound to NIL parsing an anonymous FN.")
        (multiple-value-bind (declares bindings vars)
            (loop :for bindings := rec-bindings :then (cst:rest bindings)
                  :while (cst:consp bindings)
-                 :for binding := (cst:first bindings)
                  ;; if binding is in the form (declare x y+)
-                 :if (and (cst:consp binding)
-                          (cst:atom (cst:first binding))
-                          (eq (cst:raw (cst:first binding)) 'coalton:declare))
-                   :collect (parse-let-declare binding source)
+                 :if (and (cst:consp (cst:first bindings))
+                          (cst:atom (cst:first (cst:first bindings)))
+                          (eq (cst:raw (cst:first (cst:first bindings))) 'coalton:declare))
+                   :collect (parse-let-declare (cst:first bindings) source)
                      :into declares
                  :else
-                   :collect (parse-rec-binding binding source) :into binding-list
-                   :and :collect (cst:first binding) :into vars
+                   :collect (parse-rec-binding (cst:first bindings) source) :into binding-list
+                   :and :collect (cst:first (cst:first bindings)) :into vars
                  :finally
                     (return (values declares binding-list vars)))
 
@@ -886,8 +884,7 @@ Rebound to NIL parsing an anonymous FN.")
      (make-node-or
       :nodes (loop :for args := (cst:rest form) :then (cst:rest args)
                    :while (cst:consp args)
-                   :for arg := (cst:first args)
-                   :collect (parse-expression arg source))
+                   :collect (parse-expression (cst:first args) source))
       :location (form-location source form)))
 
     ((and (cst:atom (cst:first form))
@@ -899,8 +896,7 @@ Rebound to NIL parsing an anonymous FN.")
      (make-node-and
       :nodes (loop :for args := (cst:rest form) :then (cst:rest args)
                    :while (cst:consp args)
-                   :for arg := (cst:first args)
-                   :collect (parse-expression arg source))
+                    :collect (parse-expression (cst:first args) source))
       :location (form-location source form)))
 
     ((and (cst:atom (cst:first form))
@@ -959,8 +955,7 @@ Rebound to NIL parsing an anonymous FN.")
      (make-node-cond
       :clauses (loop :for clauses := (cst:rest form) :then (cst:rest clauses)
                      :while (cst:consp clauses)
-                     :for clause := (cst:first clauses)
-                     :collect (parse-cond-clause clause source))
+                     :collect (parse-cond-clause (cst:first clauses) source))
       :location (form-location source form)))
 
     ((and (cst:atom (cst:first form))
@@ -1158,8 +1153,7 @@ Rebound to NIL parsing an anonymous FN.")
       :rator (parse-expression (cst:first form) source)
       :rands (loop :for rands := (cst:rest form) :then (cst:rest rands)
                    :while (cst:consp rands)
-                   :for rand := (cst:first rands)
-                   :collect (parse-expression rand source))
+                   :collect (parse-expression (cst:first rands) source))
       :location (form-location source form)))))
 
 (defun parse-expressions (forms source)
@@ -1437,14 +1431,13 @@ Rebound to NIL parsing an anonymous FN.")
 
          (nodes (loop :for nodes := (cst:rest form) :then (cst:rest nodes)
                       :while (cst:consp nodes)
-                      :for node := (cst:first nodes)
 
                       ;; Not the last node
                       :if (cst:consp (cst:rest nodes))
-                        :collect (parse-do-body-element node source)
+                        :collect (parse-do-body-element (cst:first nodes) source)
 
                       :else
-                        :do (setf last-node (parse-do-body-last-node node (cst:first form) source)))))
+                        :do (setf last-node (parse-do-body-last-node (cst:first nodes) (cst:first form) source)))))
 
     (make-node-do
      :nodes nodes

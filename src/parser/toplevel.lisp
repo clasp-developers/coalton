@@ -1608,22 +1608,21 @@ consume all attributes")))
       (let ((methods (loop :with inline := nil
                            :for forms := (cst:nthrest (if docstring 3 2) form) :then (cst:rest forms)
                            :while (cst:consp forms)
-                           :for method-or-attribute := (cst:first forms)
-                           :if (and (cst:consp method-or-attribute)
-                                    (eq 'coalton:inline (cst:raw (cst:first method-or-attribute))))
+                           :if (and (cst:consp (cst:first forms))
+                                    (eq 'coalton:inline (cst:raw (cst:first (cst:first forms)))))
                              :do (if inline
                                      (parse-error "Duplicate inline attribute"
-                                                  (note source method-or-attribute "inline attribute here")
+                                                  (note source (cst:first forms) "inline attribute here")
                                                   (source:secondary-note (attribute-inline-location inline) "previous attribute here"))
-                                     (setf inline (parse-inline method-or-attribute source)))
+                                     (setf inline (parse-inline (cst:first forms) source)))
                            :else
-                             :collect (let ((method (parse-instance-method-definition method-or-attribute (cst:second form) source)))
+                             :collect (let ((method (parse-instance-method-definition (cst:first forms) (cst:second form) source)))
                                         (setf (instance-method-definition-inline method) inline
                                               inline nil)
                                         method)
                            :finally (when inline
                                       (parse-error "Inline attribute must be attached to a method definition"
-                                                   (note source method-or-attribute "inline attribute here"))))))
+                                                   (note source (cst:first forms) "inline attribute here"))))))
 
         (make-toplevel-define-instance
          :context context
